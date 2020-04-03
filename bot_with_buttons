@@ -1,0 +1,166 @@
+import telebot
+import json
+import random
+from bs4 import BeautifulSoup
+import requests
+from telebot import types
+
+telebot.apihelper.proxy = {'https': 'socks5h://geek:socks@t.geekclass.ru:7777'}  # overcome blocking in telegram
+bot = telebot.TeleBot('1059634895:AAHpIObgSqQkiycCBgGWmJLI9WtSvbL9VUw')  # token
+
+stickers = []
+
+
+@bot.message_handler(commands=['start', 'help'])  # how to use bot
+def help(message):
+    user = message.chat.id
+
+    keyboard = types.InlineKeyboardMarkup()
+
+    # добавляем на нее две кнопки
+    button1 = types.InlineKeyboardButton(text="North America", callback_data="button1")
+    button2 = types.InlineKeyboardButton(text="Europe", callback_data="button2")
+    button3 = types.InlineKeyboardButton(text="Asia Pacific", callback_data="button3")
+    keyboard.add(button1)
+    keyboard.add(button2)
+    keyboard.add(button3)
+
+    # bot.send_message(user, "Команды: \n\n/russianearshort - короткий список ближайших хакатонов\n/russianear - поиск ближайших хакатонов в России\n/russiacalendarshort - короткий вывод календаря\n/russiacalendar - вывести календарь хакатонов\n/asiapacific2020 - календарь хакатонов в Азии\n/europenear2020 - календарь ближайших хакатонов в Европе\n/northamerica2020 - календарь хакатонов в Северной Америке")
+    bot.send_message(message.chat.id, "Hi there!\nI am bot and I can find some cool hackathons for you :)", reply_markup=keyboard)
+
+@bot.callback_query_handler(func=lambda call: True)  # при нажатии на кнопку
+def callback_inline(call):
+    if call.message:
+        if call.data == "button1":
+            search_america(call.message)
+        if call.data == "button2":
+            search_europe(call.message)
+        if call.data == "button3":
+            search_asia(call.message)
+
+
+@bot.message_handler(commands=['northamerica2020'])
+def search_america(message):
+    page = requests.get('https://mlh.io/seasons/na-2020/events')
+    soup = BeautifulSoup(page.text, 'html.parser')
+    user = message.chat.id
+    html = soup.find_all(class_='row') # находит первое соответствие то есть апкаминг
+    upcoming = html[1]
+
+    #'=========================== event_names ==================================')
+    event_names = upcoming.find_all('h3')
+    names = []
+    for i in event_names[1:]:
+        names.append(i.text)
+    #'=========================== event_dates ==================================')
+    event_dates = upcoming.find_all('p')
+    dates = []
+    for i in event_dates:
+        dates.append(i.text)
+    #'=========================== event_locations ==================================')
+    event_locations = upcoming.find_all(class_='event-location')
+    locations = []
+    for i in event_locations:
+        locations.append(i.text)
+    #'=========================== href ==================================')
+    event_hrefs = upcoming.find_all('a')
+    hrefs = []
+    for i in event_hrefs:
+        hrefs.append(i.get('href'))
+
+    i = 0
+    for j in names:
+        all = ""
+        all += names[i] + "\n" + dates[i] + locations[i] + hrefs[i]
+        i += 1
+        bot.send_message(user, all)
+
+
+@bot.message_handler(commands=['asiapacific2020'])
+def search_asia(message):
+    page = requests.get('https://mlh.io/seasons/apac-2020/events')
+    soup = BeautifulSoup(page.text, 'html.parser')
+    user = message.chat.id
+    html = soup.find_all(class_='row')  # находит первое соответствие то есть апкаминг
+    upcoming = html[1]
+
+    # '=========================== event_names ==================================')
+    event_names = upcoming.find_all('h3')
+    names = []
+    for i in event_names[1:]:
+        names.append(i.text)
+    # '=========================== event_dates ==================================')
+    event_dates = upcoming.find_all('p')
+    dates = []
+    for i in event_dates:
+        dates.append(i.text)
+    # '=========================== event_locations ==================================')
+    event_locations = upcoming.find_all(class_='event-location')
+    locations = []
+    for i in event_locations:
+        locations.append(i.text)
+    # '=========================== href ==================================')
+    event_hrefs = upcoming.find_all('a')
+    hrefs = []
+    for i in event_hrefs:
+        hrefs.append(i.get('href'))
+
+    i = 0
+    for j in names:
+        all = ""
+        all += names[i] + "\n" + dates[i] + locations[i] + hrefs[i]
+        i += 1
+        bot.send_message(user, all)
+
+
+@bot.message_handler(commands=['europenear2020'])
+def search_europe(message):
+    page = requests.get('https://mlh.io/seasons/eu-2020/events')
+    soup = BeautifulSoup(page.text, 'html.parser')
+    user = message.chat.id
+    html = soup.find_all(class_='row')  # находит первое соответствие то есть апкаминг
+    upcoming = html[1]
+
+    # '=========================== event_names ==================================')
+    event_names = upcoming.find_all('h3')
+    names = []
+    for i in event_names[1:]:
+        names.append(i.text)
+    # '=========================== event_dates ==================================')
+    event_dates = upcoming.find_all('p')
+    dates = []
+    for i in event_dates:
+        dates.append(i.text)
+    # '=========================== event_locations ==================================')
+    event_locations = upcoming.find_all(class_='event-location')
+    locations = []
+    for i in event_locations:
+        locations.append(i.text)
+    # '=========================== href ==================================')
+    event_hrefs = upcoming.find_all('a')
+    hrefs = []
+    for i in event_hrefs:
+        hrefs.append(i.get('href'))
+
+    i = 0
+    for j in names:
+        all = ""
+        all += names[i] + "\n" + dates[i] + locations[i] + hrefs[i]
+        i += 1
+        bot.send_message(user, all)
+
+
+@bot.message_handler(content_types=['sticker'])
+def process_sticker(message):
+    if message.sticker.file_id not in stickers:
+        stickers.append(message.sticker.file_id)
+    bot.send_sticker(message.chat.id, random.choice(stickers))
+
+
+# content_types=['text'] - сработает, если нам прислали текстовое сообщение
+@bot.message_handler(content_types=['text'])
+def echo(message):
+    help(message)
+
+
+bot.polling()  # permanent looking for message
